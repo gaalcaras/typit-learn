@@ -9,6 +9,7 @@ License: GNU GPL v3
 
 import os
 import platform
+import time
 
 from tplearn import logger
 
@@ -95,3 +96,26 @@ class TypitLearnManager(logger.LoggingMixin):
             self.info('Replace %s by %s in buffer', typo, fix)
             self.nvim.command('%s/{}/{}/ge'.format(typo, fix))
             self.nvim.command('nohl')
+
+    def show_abbrevs(self, abbreviations=None):
+        """Display abbreviations in Neovim message"""
+
+        if not abbreviations:
+            return
+
+        msg = ''
+        for i, (typo, fix) in enumerate(abbreviations.items()):
+            if i == 0:
+                fmt = '"{}" => "{}"'
+            else:
+                fmt = ', "{}" => "{}"'
+
+            msg += fmt.format(typo, fix)
+
+        self.nvim.call('tplearn#util#message', msg)
+
+    def clear_msg(self):
+        """Clear Neovim message after 2 seconds"""
+
+        time.sleep(2)
+        self.nvim.call('tplearn#util#clearmsg')

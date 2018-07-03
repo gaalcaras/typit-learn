@@ -55,6 +55,7 @@ class TypitLearn(logger.LoggingMixin):
             self._record_first = False
 
         self.tracker.track_replaced_words(buf, firstline, lastline, linedata)
+        self.manager.show_abbrevs(self.tracker.abbrev)
 
     @neovim.rpc_export('nvim_buf_changedtick_event')
     def _on_buf_changedtick_event(self, *args):
@@ -79,6 +80,7 @@ class TypitLearn(logger.LoggingMixin):
                           self.nvim.current.buffer.number,
                           True,
                           {})
+        self.nvim.call('tplearn#util#message', 'Recording')
 
     def _record_stop(self):
         self.info('Stop recording')
@@ -86,6 +88,7 @@ class TypitLearn(logger.LoggingMixin):
         self._learn()
         self.tracker.abbrev = {}
         self._record_first = True
+        self.manager.clear_msg()
 
     def _learn(self):
         if not self.tracker.abbrev:

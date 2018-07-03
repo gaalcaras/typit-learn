@@ -1,0 +1,5 @@
+The quick brown fox jmps over the lazy dgo
+This is another test line
+
+dgo (should become dog)
+jmps (should become jumps)

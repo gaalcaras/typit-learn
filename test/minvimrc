@@ -1,0 +1,4 @@
+set rtp+=.
+
+let g:tplearn_log = 1
+

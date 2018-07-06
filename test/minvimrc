@@ -1,4 +1,5 @@
 set rtp+=.
 
 let g:tplearn_log = 1
+let g:tplearn_dir = './test/abbrev'
 

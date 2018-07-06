@@ -24,14 +24,17 @@ class TypitLearnManager(logger.LoggingMixin):
         self.debug('Initialize TypitLearnManager')
 
     def _get_tpdir(self):
-        home = self.nvim.eval('$HOME')
+        tpdir = self.nvim.eval('g:tplearn_dir')
 
-        if platform.system() == 'Windows':
-            tpdir = os.path.join(home, 'vimfiles', 'typitlearn')
+        if tpdir == '':
+            home = self.nvim.eval('$HOME')
 
-        if self.nvim.eval("has('nvim')") == 1:
-            xdg_config = self.nvim.eval('$XDG_CONFIG_HOME') or os.path.join(home, '.config')
-            tpdir = os.path.join(xdg_config, 'nvim', 'typitlearn')
+            if platform.system() == 'Windows':
+                tpdir = os.path.join(home, 'vimfiles', 'typitlearn')
+
+            if self.nvim.eval("has('nvim')") == 1:
+                xdg_config = self.nvim.eval('$XDG_CONFIG_HOME') or os.path.join(home, '.config')
+                tpdir = os.path.join(xdg_config, 'nvim', 'typitlearn')
 
         if not os.path.exists(tpdir):
             try:

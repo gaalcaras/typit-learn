@@ -80,9 +80,10 @@ class TypitLearnManager(logger.LoggingMixin):
 
         filepath = self._get_file_to_edit()
         content = ''
+        function = 'call tplearn#util#abbreviate("{}", "{}")\n'
 
         for typo, fix in abbreviations.items():
-            content += 'abbreviate {} {}\n'.format(typo, fix)
+            content += function.format(typo, fix)
 
         with open(filepath, 'a+') as tpfile:
             self.info('Write %s abbreviations to %s',

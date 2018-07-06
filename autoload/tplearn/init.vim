@@ -7,4 +7,13 @@ endfunction
 
 function! s:init()
   call _typitlearn_load_abbreviations()
+  call s:init_mappings()
+endfunction
+
+function s:init_mappings()
+  nnoremap <buffer> <plug>(tplearn_record) :TypitLearnRecord<cr>
+  nmap <silent><buffer> <leader>qq <plug>(tplearn_record)
+
+  nnoremap <buffer> <plug>(tplearn_edit) :TypitLearnEdit<cr>
+  nmap <silent><buffer> <leader>qe <plug>(tplearn_edit)
 endfunction

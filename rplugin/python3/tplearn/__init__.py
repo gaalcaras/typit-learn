@@ -74,6 +74,10 @@ class TypitLearn(logger.LoggingMixin):
             self._record_stop()
             self.nvim.vars['tplearn_record'] = 0
 
+    @neovim.command('TypitLearnEdit', nargs=0)
+    def _edit_abbrev_file(self):
+        self.manager.edit_file()
+
     def _record_start(self):
         self.info('Start recording')
         self.nvim.request('nvim_buf_attach',

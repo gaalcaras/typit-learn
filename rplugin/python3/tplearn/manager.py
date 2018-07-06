@@ -90,6 +90,12 @@ class TypitLearnManager(logger.LoggingMixin):
                       len(abbreviations), filepath)
             tpfile.write(content)
 
+    def edit_file(self):
+        """Open abbreviation file"""
+
+        filepath = self._get_file_to_edit()
+        self.nvim.command('vsplit {}'.format(filepath))
+
     def fix_typos(self, abbreviations=None):
         """Search and replace all abbreviations"""
 

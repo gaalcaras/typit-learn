@@ -16,4 +16,7 @@ function s:init_mappings()
 
   nnoremap <buffer> <plug>(tplearn_edit) :TypitLearnEdit<cr>
   nmap <silent><buffer> <leader>qe <plug>(tplearn_edit)
+
+  nnoremap <buffer> <plug>(tplearn_reload) :TypitLearnReload<cr>
+  nmap <silent><buffer> <leader>qr <plug>(tplearn_reload)
 endfunction

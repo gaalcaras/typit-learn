@@ -78,6 +78,10 @@ class TypitLearn(logger.LoggingMixin):
     def _edit_abbrev_file(self):
         self.manager.edit_file()
 
+    @neovim.command('TypitLearnReload', nargs=0)
+    def _reload(self):
+        self.manager.load_abbreviations()
+
     def _record_start(self):
         self.info('Start recording')
         self.nvim.request('nvim_buf_attach',

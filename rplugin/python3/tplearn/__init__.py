@@ -86,9 +86,11 @@ class TypitLearn(logger.LoggingMixin):
         self.info('Stop recording')
         self.nvim.request('nvim_buf_detach', self.nvim.current.buffer.number)
         self._learn()
+        self.manager.show_abbrevs(self.tracker.abbrev(), 'Recorded')
+
         self.tracker.reset()
         self._record_first = True
-        self.manager.clear_msg()
+        self.manager.clear_msg(5)
 
     def _learn(self):
         if not self.tracker.abbrev:

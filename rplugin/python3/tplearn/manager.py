@@ -98,7 +98,7 @@ class TypitLearnManager(logger.LoggingMixin):
             self.nvim.command('%s/{}/{}/ge'.format(typo, fix))
             self.nvim.command('nohl')
 
-    def show_abbrevs(self, abbreviations=None):
+    def show_abbrevs(self, abbreviations=None, text=None):
         """Display abbreviations in Neovim message"""
 
         if not abbreviations:
@@ -114,10 +114,13 @@ class TypitLearnManager(logger.LoggingMixin):
 
             msg += fmt.format(typo, fix)
 
+        if text:
+            msg = '{} {}'.format(text, msg)
+
         self.nvim.call('tplearn#util#message', msg)
 
-    def clear_msg(self):
-        """Clear Neovim message after 2 seconds"""
+    def clear_msg(self, seconds=3):
+        """Clear Neovim message after n seconds"""
 
-        time.sleep(2)
+        time.sleep(seconds)
         self.nvim.call('tplearn#util#clearmsg')

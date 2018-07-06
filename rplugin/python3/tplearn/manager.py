@@ -10,6 +10,7 @@ License: GNU GPL v3
 import os
 import platform
 import time
+import re
 
 from tplearn import logger
 
@@ -20,6 +21,7 @@ class TypitLearnManager(logger.LoggingMixin):
     def __init__(self, nvim, log=False):
         self.nvim = nvim
         self.is_log_enabled = log
+        self._all_abbrev = {}
 
         self.debug('Initialize TypitLearnManager')
 
@@ -72,11 +74,18 @@ class TypitLearnManager(logger.LoggingMixin):
                 self.info('Loading %s', abbrev_file)
                 self.nvim.command('silent source {}'.format(abbrev_file))
 
+        self._load_all_abbrev()
+
     def _get_file_to_edit(self):
         tpdir = self._get_tpdir()
         tpfile = os.path.join(tpdir, 'all.vim')
 
         return tpfile
+
+    def register_abbrev(self, typo, fix):
+        """Add typo / fix to keep track of existing abbreviations"""
+
+        self._all_abbrev.update({typo: fix})
 
     def save_abbreviations(self, abbreviations=None):
         """Append abbreviations to files"""
@@ -92,6 +101,19 @@ class TypitLearnManager(logger.LoggingMixin):
             self.info('Write %s abbreviations to %s',
                       len(abbreviations), filepath)
             tpfile.write(content)
+
+    def _load_all_abbrev(self):
+        output = self.nvim.command_output('iabbrev')
+        output = output.split('\n')
+        output = [l for l in output if ('tplearn#' not in l ) and (l != '')]
+        output = [s for l in output for s in l.split() ]
+        typos = [output[i] for i in range(1, len(output), 3)]
+        fixes = [output[i] for i in range(2, len(output), 3)]
+
+        abbrev = dict(zip(typos, fixes))
+
+        self._all_abbrev.update(abbrev)
+        self.debug('Loaded abbrev: %s', self._all_abbrev)
 
     def edit_file(self):
         """Open abbreviation file"""

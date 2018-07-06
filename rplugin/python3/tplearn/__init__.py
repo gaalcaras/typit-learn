@@ -37,6 +37,10 @@ class TypitLearn(logger.LoggingMixin):
     def _load_abbreviations(self, args):
         self.manager.load_abbreviations()
 
+    @neovim.function('_tplearn_register_abbrev')
+    def _register_abbrev(self, args):
+        self.manager.register_abbrev(*args)
+
     @neovim.rpc_export('nvim_buf_lines_event')
     def _on_buf_lines_event(self, *args):
         buf = args[0]

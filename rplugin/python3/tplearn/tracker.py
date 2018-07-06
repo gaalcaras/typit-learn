@@ -16,7 +16,7 @@ class TypitLearnTracker(logger.LoggingMixin):
 
     def __init__(self, log=False):
         self.is_log_enabled = log
-        self.abbrev = {}
+        self._abbrev = {}
         self._buffers = {}
 
         self.debug('Initialize TypitLearnTracker')
@@ -59,10 +59,29 @@ class TypitLearnTracker(logger.LoggingMixin):
         old_words = old_line.split(' ')
         new_words = new_line.split(' ')
 
-        for i, word in enumerate(new_words):
-            if (word != old_words[i]) or (old_words[i] in self.abbrev):
-                self.abbrev.update({old_words[i]: word})
+        for i, word in enumerate(old_words):
+            if i > len(new_words)-1:
+                break
 
-        self.info('abbrev: {}'.format(self.abbrev))
+            if (word != new_words[i]) or (word in self._abbrev):
+                self._abbrev.update({word: new_words[i]})
+
+        self.info('abbrev: {}'.format(self._abbrev))
 
         return
+
+    def abbrev(self):
+        """Return filtered abbreviations"""
+
+        abbrev = self._abbrev
+        typos = [t for t, f in abbrev.items() if t == f or f == '']
+
+        for typo in typos:
+            abbrev.pop(typo)
+
+        return abbrev
+
+    def reset(self):
+        """Reset stored abbreviations"""
+        self._abbrev = {}
+        self._buffers = {}

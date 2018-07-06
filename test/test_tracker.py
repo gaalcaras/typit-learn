@@ -22,4 +22,43 @@ def test_tracker_one_word_change():
     changes = [buf, 0, 1, buf[:]]
     TRACKER.track_replaced_words(*changes)
 
-    assert TRACKER.abbrev == {'dgo': 'dog'}
+    assert TRACKER.abbrev() == {'dgo': 'dog'}
+
+def test_tracker_delete_word():
+    buf = NvimTestBuffer(['The quick brown fox jmps over the lazy '])
+    changes = [buf, 0, 1, buf[:]]
+    TRACKER.track_replaced_words(*changes)
+
+    assert TRACKER.abbrev() == {}
+
+    buf = NvimTestBuffer(['The quick brown fox jmps over the lazy'])
+    changes = [buf, 0, 1, buf[:]]
+    TRACKER.track_replaced_words(*changes)
+
+    assert TRACKER.abbrev() == {}
+
+    buf = NvimTestBuffer(['The quick brown fox jmps over the lazy dog'])
+    changes = [buf, 0, 1, buf[:]]
+    TRACKER.track_replaced_words(*changes)
+
+    assert TRACKER.abbrev() == {'dgo': 'dog'}
+
+def test_tracker_same_word():
+    buf = NvimTestBuffer(['The quick brown fox jmps over the lazy dgo'])
+    changes = [buf, 0, 1, buf[:]]
+    TRACKER.track_replaced_words(*changes)
+
+    assert TRACKER.abbrev() == {}
+
+    buf = NvimTestBuffer(['The quick brown fox jmps over the lazy dog'])
+    changes = [buf, 0, 1, buf[:]]
+    TRACKER.track_replaced_words(*changes)
+
+    assert TRACKER.abbrev() == {'dgo': 'dog'}
+
+def test_tracker_add_word():
+    buf = NvimTestBuffer(['The quick brown fox jmps over the lazy dgo stuff'])
+    changes = [buf, 0, 1, buf[:]]
+    TRACKER.track_replaced_words(*changes)
+
+    assert TRACKER.abbrev() == {}

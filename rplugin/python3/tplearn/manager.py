@@ -102,6 +102,7 @@ class TypitLearnManager(logger.LoggingMixin):
         """Display abbreviations in Neovim message"""
 
         if not abbreviations:
+            self.nvim.call('tplearn#util#message', 'No fixes')
             return
 
         msg = ''

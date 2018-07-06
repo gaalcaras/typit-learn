@@ -49,7 +49,7 @@ class TypitLearnTracker(logger.LoggingMixin):
         :lastline: [int] last line of changes
         :linedata: [list] changed lines"""
 
-        if (lastline - firstline > 1) or (not linedata):
+        if (lastline - firstline != 1) or (not linedata) or (len(linedata) > 1):
             self.debug("Changes can't be handled by TypitLearn.")
             return
 

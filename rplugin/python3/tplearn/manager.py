@@ -82,6 +82,14 @@ class TypitLearnManager(logger.LoggingMixin):
 
         return tpfile
 
+    def _check_abbreviations(self, abb=None):
+        warn = {}
+        typos = self._all_abbrev.keys()
+        warn['typo'] = [t for t in abb if t in typos]
+        warn['fix'] = [t for t, f in abb.items() if f in typos]
+
+        return warn
+
     def save_abbreviations(self, abbreviations=None):
         """Append abbreviations to files"""
 

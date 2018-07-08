@@ -26,3 +26,9 @@ def test_load_abbreviations():
     MANAGER.load_abbreviations()
     assert MANAGER._all_abbrev == {'teh': 'the', 'jmps': 'jumps',
                                    'helloworld': 'helloworld2'}
+
+def test_check_abbreviations():
+    warn = MANAGER._check_abbreviations({'teh': 'the', 'new': 'newtest',
+                                         'jmps': 'jmpstest',
+                                         'test': 'helloworld'})
+    assert warn == {'typo': ['teh', 'jmps'], 'fix': ['test']}

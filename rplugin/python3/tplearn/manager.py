@@ -82,11 +82,6 @@ class TypitLearnManager(logger.LoggingMixin):
 
         return tpfile
 
-    def register_abbrev(self, typo, fix):
-        """Add typo / fix to keep track of existing abbreviations"""
-
-        self._all_abbrev.update({typo: fix})
-
     def save_abbreviations(self, abbreviations=None):
         """Append abbreviations to files"""
 
@@ -105,14 +100,15 @@ class TypitLearnManager(logger.LoggingMixin):
     def _load_all_abbrev(self):
         output = self.nvim.command_output('iabbrev')
         output = output.split('\n')
-        output = [l for l in output if ('tplearn#' not in l ) and (l != '')]
-        output = [s for l in output for s in l.split() ]
+        output = [l for l in output if ('tplearn#' not in l) and (l != '')]
+        output = [s for l in output for s in l.split()]
         typos = [output[i] for i in range(1, len(output), 3)]
         fixes = [output[i] for i in range(2, len(output), 3)]
 
         abbrev = dict(zip(typos, fixes))
-
         self._all_abbrev.update(abbrev)
+
+        self._all_abbrev.update(self.nvim.eval('g:tplearn_abbrev'))
         self.debug('Loaded abbrev: %s', self._all_abbrev)
 
     def edit_file(self):

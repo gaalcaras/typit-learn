@@ -28,5 +28,5 @@ function! tplearn#util#abbreviate(typo, fix)
   endif
 
   execute l:command
-  call _tplearn_register_abbrev(a:typo, a:fix)
+  let g:tplearn_abbrev[a:typo] = a:fix
 endfunction

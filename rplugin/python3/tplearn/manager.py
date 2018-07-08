@@ -122,7 +122,7 @@ class TypitLearnManager(logger.LoggingMixin):
 
         for typo, fix in abbreviations.items():
             self.info('Replace %s by %s in buffer', typo, fix)
-            self.nvim.command('%s/{}/{}/ge'.format(typo, fix))
+            self.nvim.command('%s/\<{}\>/{}/ge'.format(typo, fix))
             self.nvim.command('nohl')
 
     def show_abbrevs(self, abbreviations=None, text=None):

@@ -3,3 +3,5 @@ This is another test line
 
 dgo (should become dog)
 jmps (should become jumps)
+jmpstest (should stay the same)
+test jmps, test (should become jumps)

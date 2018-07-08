@@ -105,15 +105,19 @@ class TypitLearnManager(logger.LoggingMixin):
                       len(abbreviations), filepath)
             tpfile.write(content)
 
-    def _load_all_abbrev(self):
-        output = self.nvim.command_output('iabbrev')
+    def _parse_nvim_abbrev(self, command):
+        output = self.nvim.command_output(command)
         output = output.split('\n')
         output = [l for l in output if ('tplearn#' not in l) and (l != '')]
         output = [s for l in output for s in l.split()]
         typos = [output[i] for i in range(1, len(output), 3)]
         fixes = [output[i] for i in range(2, len(output), 3)]
 
-        abbrev = dict(zip(typos, fixes))
+        return dict(zip(typos, fixes))
+
+    def _load_all_abbrev(self):
+        abbrev = self._parse_nvim_abbrev('iabbrev')
+
         self._all_abbrev.update(abbrev)
 
         self._all_abbrev.update(self.nvim.eval('g:tplearn_abbrev'))

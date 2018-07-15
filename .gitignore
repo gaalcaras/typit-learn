@@ -1,2 +1,3 @@
 *.log
 .gitattributes
+test/tmp_abbrev

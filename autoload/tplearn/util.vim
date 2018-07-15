@@ -13,7 +13,7 @@ function! tplearn#util#clearmsg()
 endfunction
 
 function! tplearn#util#ciw(replacement)
-  execute 'normal! ciw' . a:replacement
+  execute 'normal! xciw' . a:replacement
 endfunction
 
 function! tplearn#util#abbreviate(typo, fix)

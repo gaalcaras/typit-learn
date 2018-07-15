@@ -9,8 +9,6 @@ License: GNU GPL v3
 
 import os
 import platform
-import time
-import re
 
 from tplearn import logger
 
@@ -82,28 +80,64 @@ class TypitLearnManager(logger.LoggingMixin):
 
         return tpfile
 
-    def _check_abbreviations(self, abb=None):
-        warn = {}
-        typos = self._all_abbrev.keys()
-        warn['typo'] = [t for t in abb if t in typos]
-        warn['fix'] = [t for t, f in abb.items() if f in typos]
+    def _prompt(self, msg='', options=None, default=''):
+        option = '\n'.join(['&' + o for o in options])
+        default = options.index(default)+1
 
-        return warn
+        command = 'let g:tplearn_prompt = confirm("{}", "{}", {})'
+        command = command.format(msg, option, default)
+        self.nvim.command(command)
+
+        prompt = self.nvim.eval('g:tplearn_prompt')
+        return options[prompt-1]
+
+    def _check_abbreviations(self, abb=None):
+        old_typos = self._all_abbrev.keys()
+        result = {}
+        for typo, fix in abb.items():
+            if typo in old_typos:
+                if fix == self._all_abbrev[typo]:
+                    continue
+
+                existing = self._all_abbrev[typo]
+                message = '\\"{}\\" already expands to \\"{}\\". Expand to \\"{}\\" instead?'
+                message = message.format(typo, existing, fix)
+            elif fix in old_typos:
+                existing = self._all_abbrev[fix]
+                message = '\\"{}\\" expands to \\"{}\\". Use as a fix of \\"{}\\" instead?'
+                message = message.format(fix, existing, typo)
+            else:
+                result.update({typo: fix})
+                continue
+
+            self.info(message.replace('\\', ''))
+            prompt = self._prompt(message, ['Yes', 'No', 'Abort'], 'No')
+            self.info('User answered "{}"'.format(prompt))
+
+            if prompt == 'Abort':
+                break
+            elif prompt == 'Yes':
+                result.update({typo: fix})
+            else:
+                continue
+
+        return result
 
     def save_abbreviations(self, abbreviations=None):
         """Append abbreviations to files"""
 
-        filepath = self._get_file_to_edit()
-        content = ''
-        function = 'call tplearn#util#abbreviate("{}", "{}")\n'
+        abbreviations = self._check_abbreviations(abbreviations)
 
-        for typo, fix in abbreviations.items():
-            content += function.format(typo, fix)
+        filepath = self._get_file_to_edit()
+        function = 'call tplearn#util#abbreviate("{}", "{}")\n'
+        content = ''.join([function.format(t, f) for t, f in abbreviations.items()])
 
         with open(filepath, 'a+') as tpfile:
             self.info('Write %s abbreviations to %s',
                       len(abbreviations), filepath)
             tpfile.write(content)
+
+        return abbreviations
 
     def _parse_nvim_abbrev(self, command):
         output = self.nvim.command_output(command)
@@ -131,6 +165,8 @@ class TypitLearnManager(logger.LoggingMixin):
 
     def fix_typos(self, abbreviations=None):
         """Search and replace all abbreviations"""
+        if not abbreviations:
+            return
 
         for typo, fix in abbreviations.items():
             self.info('Replace %s by %s in buffer', typo, fix)
@@ -157,9 +193,3 @@ class TypitLearnManager(logger.LoggingMixin):
             msg = '{} {}'.format(text, msg)
 
         self.nvim.call('tplearn#util#message', msg)
-
-    def clear_msg(self, seconds=3):
-        """Clear Neovim message after n seconds"""
-
-        time.sleep(seconds)
-        self.nvim.call('tplearn#util#clearmsg')

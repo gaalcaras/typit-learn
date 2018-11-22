@@ -141,7 +141,7 @@ class TypitLearnManager(logger.LoggingMixin):
                       len(abbreviations), filepath)
             tpfile.write(content)
 
-        return abbreviations
+        return new_abbrev
 
     def _parse_nvim_abbrev(self, command):
         output = self.nvim.command_output(command)

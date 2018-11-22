@@ -46,6 +46,7 @@ def test_changing_word():
     time.sleep(0.1)
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert abbrev['quick'] == 'WORD'
+    assert NV.get_last_message() == '[TypitLearn] Recorded "quick" => "WORD"'
 
 def test_replace_existing_typo_same_fix():
     NV.cleanup()
@@ -59,6 +60,7 @@ def test_replace_existing_typo_same_fix():
     time.sleep(0.1)
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert abbrev['jmps'] == 'jumps'
+    assert NV.get_last_message() == '[TypitLearn] No fixes'
 
 def test_replace_existing_typo():
     if NV_SOCKET.nvim is None:
@@ -78,6 +80,7 @@ def test_replace_existing_typo():
     time.sleep(0.1)
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert abbrev['jmps'] == 'WORD'
+    assert NV_SOCKET.get_last_message() == '[TypitLearn] Recorded "jmps" => "WORD"'
 
 def test_dont_replace_existing_typo():
     if NV_SOCKET.nvim is None:
@@ -97,6 +100,7 @@ def test_dont_replace_existing_typo():
     time.sleep(0.1)
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert abbrev['jmps'] == 'WORD'
+    assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'
 
 def test_abort_replace_existing_typo():
     if NV_SOCKET.nvim is None:
@@ -117,6 +121,7 @@ def test_abort_replace_existing_typo():
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert abbrev['jmps'] == 'WORD'
     assert abbrev['quick'] == 'WORD'
+    assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'
 
 def test_replace_existing_fix():
     if NV_SOCKET.nvim is None:
@@ -136,6 +141,7 @@ def test_replace_existing_fix():
     time.sleep(0.1)
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert abbrev['fox'] == 'teh'
+    assert NV_SOCKET.get_last_message() == '[TypitLearn] Recorded "fox" => "teh"'
 
 def test_dont_replace_existing_fix():
     if NV_SOCKET.nvim is None:
@@ -155,6 +161,7 @@ def test_dont_replace_existing_fix():
     time.sleep(0.1)
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert ('brown' not in abbrev) is True
+    assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'
 
 def test_abort_replace_existing_fix():
     if NV_SOCKET.nvim is None:
@@ -175,3 +182,4 @@ def test_abort_replace_existing_fix():
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert ('brown' not in abbrev) is True
     assert ('lazy' not in abbrev) is True
+    assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'

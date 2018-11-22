@@ -72,6 +72,9 @@ class NvimInstance(object):
         self.nvim.command(cleanup_func)
         self.nvim.command('call BeforeEachTest("{}")'.format(self._tmp))
 
+    def get_last_message(self):
+        return self.nvim.command_output('messages').split('\n')[-1]
+
 class NvimTestBuffer(object):
 
     def __init__(self, content, number=1):

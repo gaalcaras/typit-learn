@@ -124,15 +124,19 @@ class TypitLearnManager(logger.LoggingMixin):
         return result
 
     def save_abbreviations(self, abbreviations=None):
-        """Append abbreviations to files"""
+        """Write abbreviations to files"""
 
-        abbreviations = self._check_abbreviations(abbreviations)
+        new_abbrev = self._check_abbreviations(abbreviations)
+        self._all_abbrev.update(new_abbrev)
 
         filepath = self._get_file_to_edit()
         function = 'call tplearn#util#abbreviate("{}", "{}")\n'
-        content = ''.join([function.format(t, f) for t, f in abbreviations.items()])
+        content = ''
 
-        with open(filepath, 'a+') as tpfile:
+        for typo, fix in self._all_abbrev.items():
+            content += function.format(typo, fix)
+
+        with open(filepath, 'w+') as tpfile:
             self.info('Write %s abbreviations to %s',
                       len(abbreviations), filepath)
             tpfile.write(content)

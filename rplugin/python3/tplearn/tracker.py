@@ -74,7 +74,7 @@ class TypitLearnTracker(logger.LoggingMixin):
         """Return filtered abbreviations"""
 
         abbrev = self._abbrev
-        typos = [t for t, f in abbrev.items() if t == f or f == '']
+        typos = [t for t, f in abbrev.items() if f in (t, '') or t == '']
 
         for typo in typos:
             abbrev.pop(typo)

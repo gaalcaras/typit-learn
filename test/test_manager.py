@@ -33,6 +33,7 @@ def test_load_abbreviations():
     MANAGER.load_abbreviations()
     assert MANAGER._all_abbrev == {'teh': 'the', 'jmps': 'jumps',
                                    'helloworld': 'helloworld2'}
+    assert MANAGER._tplearn_abbrev == {'teh': 'the', 'jmps': 'jumps'}
 
 def test_changing_word():
     NV.cleanup()
@@ -88,18 +89,23 @@ def test_dont_replace_existing_typo():
 
     NV_SOCKET.cleanup()
     nvim = NV_SOCKET.nvim
+    nvim.current.buffer[1] = 'helloworld'
 
     # New fix
     nvim.command('TypitLearnRecord')
     time.sleep(0.1)
     nvim.current.buffer[0] = 'The quick brown fox HELLO over the lazy dgo'
+    nvim.current.buffer[1] = 'helloworld3'
     time.sleep(0.1)
     nvim.command('TypitLearnRecord')
     time.sleep(0.1)
     nvim.input('N')
     time.sleep(0.1)
+    nvim.input('N')
+    time.sleep(0.1)
     abbrev = nvim.eval('g:tplearn_abbrev')
     assert abbrev['jmps'] == 'WORD'
+    assert ('helloworld' not in abbrev)
     assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'
 
 def test_abort_replace_existing_typo():

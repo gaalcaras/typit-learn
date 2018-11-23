@@ -20,6 +20,7 @@ class TypitLearnManager(logger.LoggingMixin):
         self.nvim = nvim
         self.is_log_enabled = log
         self._all_abbrev = {}
+        self._tplearn_abbrev = {}
 
         self.debug('Initialize TypitLearnManager')
 
@@ -127,14 +128,17 @@ class TypitLearnManager(logger.LoggingMixin):
         """Write abbreviations to files"""
 
         new_abbrev = self._check_abbreviations(abbreviations)
-        self._all_abbrev.update(new_abbrev)
+        self._tplearn_abbrev.update(new_abbrev)
 
         filepath = self._get_file_to_edit()
         function = 'call tplearn#util#abbreviate("{}", "{}")\n'
         content = ''
 
-        for typo, fix in self._all_abbrev.items():
+        for typo, fix in self._tplearn_abbrev.items():
             content += function.format(typo, fix)
+
+        content = content.encode('utf-8', 'surrogateescape')
+        content = content.decode('utf-8', 'replace')
 
         with open(filepath, 'w+') as tpfile:
             self.info('Write %s abbreviations to %s',
@@ -147,6 +151,7 @@ class TypitLearnManager(logger.LoggingMixin):
         output = self.nvim.command_output(command)
         output = output.split('\n')
         output = [l for l in output if ('tplearn#' not in l) and (l != '')]
+        output = [l.replace('*', '') for l in output]
         output = [s for l in output for s in l.split()]
         typos = [output[i] for i in range(1, len(output), 3)]
         fixes = [output[i] for i in range(2, len(output), 3)]
@@ -154,12 +159,15 @@ class TypitLearnManager(logger.LoggingMixin):
         return dict(zip(typos, fixes))
 
     def _load_all_abbrev(self):
-        abbrev = self._parse_nvim_abbrev('iabbrev')
+        abbrev_other = self._parse_nvim_abbrev('iabbrev')
+        abbrev_tpl = self.nvim.eval('g:tplearn_abbrev')
 
-        self._all_abbrev.update(abbrev)
+        self._tplearn_abbrev.update(abbrev_tpl)
 
-        self._all_abbrev.update(self.nvim.eval('g:tplearn_abbrev'))
-        self.debug('Loaded abbrev: %s', self._all_abbrev)
+        self._all_abbrev.update(abbrev_other)
+        self._all_abbrev.update(abbrev_tpl)
+        self.debug('TypitLearn abbrev: %s', self._tplearn_abbrev)
+        self.debug('All abbrev: %s', self._all_abbrev)
 
     def edit_file(self):
         """Open abbreviation file"""

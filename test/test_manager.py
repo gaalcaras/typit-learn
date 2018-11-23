@@ -7,27 +7,22 @@ Author: Gabriel Alcaras
 License: GNU GPL v3
 """
 
-import time
-import pytest
-
 from test.utils import NvimInstance
 from tplearn import manager #pylint: disable=import-error
 
-NV = NvimInstance()
-NV_SOCKET = NvimInstance('socket')
-MANAGER = manager.TypitLearnManager(NV.nvim)
-
-RETURN = NV.nvim.replace_termcodes('<return>')
+NV1 = NvimInstance()
+NV2 = NvimInstance('socket')
+MANAGER = manager.TypitLearnManager(NV1.nvim)
 
 def test_file_to_edit():
     assert MANAGER._get_file_to_edit() == './test/tmp_abbrev/all.vim'
 
 def test_fix_typos():
-    NV.cleanup()
+    NV1.cleanup()
     MANAGER.fix_typos({'jmps': 'jumps'})
-    assert NV.nvim.buffers[1][4] == 'jumps (should become jumps)'
-    assert NV.nvim.buffers[1][5] == 'jmpstest (should stay the same)'
-    assert NV.nvim.buffers[1][6] == 'test jumps, test (should become jumps)'
+    assert NV1.nvim.buffers[1][4] == 'jumps (should become jumps)'
+    assert NV1.nvim.buffers[1][5] == 'jmpstest (should stay the same)'
+    assert NV1.nvim.buffers[1][6] == 'test jumps, test (should become jumps)'
 
 def test_load_abbreviations():
     MANAGER.load_abbreviations()
@@ -36,156 +31,68 @@ def test_load_abbreviations():
     assert MANAGER._tplearn_abbrev == {'teh': 'the', 'jmps': 'jumps'}
 
 def test_changing_word():
-    NV.cleanup()
-    nvim = NV.nvim
+    NV1.cleanup()
 
-    # New fix
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.current.buffer[0] = 'The WORD brown fox jmps over the lazy dgo'
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    abbrev = nvim.eval('g:tplearn_abbrev')
-    assert abbrev['quick'] == 'WORD'
-    assert NV.get_last_message() == '[TypitLearn] Recorded "quick" => "WORD"'
+    abb = NV1.play_record(['The WORD brown fox jmps over the lazy dgo'])
+    assert abb['quick'] == 'WORD'
+    assert NV1.get_last_message() == '[TypitLearn] Recorded "quick" => "WORD"'
 
 def test_replace_existing_typo_same_fix():
-    NV.cleanup()
-    nvim = NV.nvim
+    NV1.cleanup()
 
-    # New fix
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.current.buffer[0] = 'The quick brown fox jumps over the lazy dgo'
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    abbrev = nvim.eval('g:tplearn_abbrev')
-    assert abbrev['jmps'] == 'jumps'
-    assert NV.get_last_message() == '[TypitLearn] No fixes'
+    abb = NV1.play_record(['The quick brown fox jumps over the lazy dgo'])
+    assert abb['jmps'] == 'jumps'
+    assert NV1.get_last_message() == '[TypitLearn] No fixes'
 
 def test_replace_existing_typo():
-    if NV_SOCKET.nvim is None:
-        pytest.skip('Could not find nvim socket instance')
+    NV2.cleanup()
 
-    NV_SOCKET.cleanup()
-    nvim = NV_SOCKET.nvim
-
-    # New fix
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.current.buffer[0] = 'The quick brown fox WORD over the lazy dgo'
-    time.sleep(0.1)
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.input('Y')
-    time.sleep(0.1)
-    abbrev = nvim.eval('g:tplearn_abbrev')
-    assert abbrev['jmps'] == 'WORD'
-    assert NV_SOCKET.get_last_message() == '[TypitLearn] Recorded "jmps" => "WORD"'
+    abb = NV2.play_record(['The quick brown fox WORD over the lazy dgo'],
+                          feedkeys=['Y'])
+    assert abb['jmps'] == 'WORD'
+    assert NV2.get_last_message() == '[TypitLearn] Recorded "jmps" => "WORD"'
 
 def test_dont_replace_existing_typo():
-    if NV_SOCKET.nvim is None:
-        pytest.skip('Could not find nvim socket instance')
+    NV2.cleanup()
+    NV2.nvim.current.buffer[1] = 'helloworld'
 
-    NV_SOCKET.cleanup()
-    nvim = NV_SOCKET.nvim
-    nvim.current.buffer[1] = 'helloworld'
-
-    # New fix
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.current.buffer[0] = 'The quick brown fox HELLO over the lazy dgo'
-    nvim.current.buffer[1] = 'helloworld3'
-    time.sleep(0.1)
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.input('N')
-    time.sleep(0.1)
-    nvim.input('N')
-    time.sleep(0.1)
-    abbrev = nvim.eval('g:tplearn_abbrev')
-    assert abbrev['jmps'] == 'WORD'
-    assert ('helloworld' not in abbrev)
-    assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'
+    abb = NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
+                           'helloworld3'], feedkeys=['N', 'N'])
+    assert abb['jmps'] == 'WORD'
+    assert 'helloworld' not in abb
+    assert NV2.get_last_message() == '[TypitLearn] No fixes'
 
 def test_abort_replace_existing_typo():
-    if NV_SOCKET.nvim is None:
-        pytest.skip('Could not find nvim socket instance')
+    NV2.cleanup()
+    NV2.nvim.current.buffer[1] = 'helloworld'
 
-    NV_SOCKET.cleanup()
-    nvim = NV_SOCKET.nvim
-
-    # New fix
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.current.buffer[0] = 'The WORLD brown fox HELLO over the lazy dgo'
-    time.sleep(0.1)
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.input('A')
-    time.sleep(0.1)
-    abbrev = nvim.eval('g:tplearn_abbrev')
-    assert abbrev['jmps'] == 'WORD'
-    assert abbrev['quick'] == 'WORD'
-    assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'
+    abb = NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
+                           'helloworld3'],
+                          feedkeys=['A'])
+    assert abb['jmps'] == 'WORD'
+    assert 'helloworld' not in abb
+    assert NV2.get_last_message() == '[TypitLearn] No fixes'
 
 def test_replace_existing_fix():
-    if NV_SOCKET.nvim is None:
-        pytest.skip('Could not find nvim socket instance')
+    NV2.cleanup()
 
-    NV_SOCKET.cleanup()
-    nvim = NV_SOCKET.nvim
-
-    # New fix
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.current.buffer[0] = 'The quick brown teh jmps over the lazy dgo'
-    time.sleep(0.1)
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.input('Y')
-    time.sleep(0.1)
-    abbrev = nvim.eval('g:tplearn_abbrev')
-    assert abbrev['fox'] == 'teh'
-    assert NV_SOCKET.get_last_message() == '[TypitLearn] Recorded "fox" => "teh"'
+    abb = NV2.play_record(['The quick brown teh jmps over the lazy dgo'],
+                          feedkeys=['Y'])
+    assert abb['fox'] == 'teh'
+    assert NV2.get_last_message() == '[TypitLearn] Recorded "fox" => "teh"'
 
 def test_dont_replace_existing_fix():
-    if NV_SOCKET.nvim is None:
-        pytest.skip('Could not find nvim socket instance')
+    NV2.cleanup()
 
-    NV_SOCKET.cleanup()
-    nvim = NV_SOCKET.nvim
-
-    # New fix
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.current.buffer[0] = 'The quick teh fox jmps over the lazy dgo'
-    time.sleep(0.1)
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.input('N')
-    time.sleep(0.1)
-    abbrev = nvim.eval('g:tplearn_abbrev')
-    assert ('brown' not in abbrev) is True
-    assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'
+    abb = NV2.play_record(['The quick teh fox jmps over the lazy dgo'],
+                          feedkeys=['N'])
+    assert 'brown' not in abb
+    assert NV2.get_last_message() == '[TypitLearn] No fixes'
 
 def test_abort_replace_existing_fix():
-    if NV_SOCKET.nvim is None:
-        pytest.skip('Could not find nvim socket instance')
+    NV2.cleanup()
 
-    NV_SOCKET.cleanup()
-    nvim = NV_SOCKET.nvim
-
-    # New fix
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.current.buffer[0] = 'The quick teh fox HELLO over the jmps dgo'
-    time.sleep(0.1)
-    nvim.command('TypitLearnRecord')
-    time.sleep(0.1)
-    nvim.input('A')
-    time.sleep(0.1)
-    abbrev = nvim.eval('g:tplearn_abbrev')
-    assert ('brown' not in abbrev) is True
-    assert ('lazy' not in abbrev) is True
-    assert NV_SOCKET.get_last_message() == '[TypitLearn] No fixes'
+    abb = NV2.play_record(['The quick teh fox HELLO over the jmps dgo'],
+                          feedkeys=['A'])
+    assert 'brown' not in abb
+    assert 'lazy' not in abb

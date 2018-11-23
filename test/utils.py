@@ -7,10 +7,13 @@ Author: Gabriel Alcaras
 License: GNU GPL v3
 """
 
-import tempfile
-import textwrap
 from shutil import copyfile, rmtree
 import os
+import tempfile
+import textwrap
+import time
+
+import pytest
 
 from neovim import attach
 
@@ -54,15 +57,18 @@ class NvimInstance(object):
                                          "test/minvimrc", "--embed"])
 
         try:
-            nv = attach('socket', path='/tmp/nvim_tplearn')
+            nvim = attach('socket', path='/tmp/nvim_tplearn')
         except FileNotFoundError:
             print('\nCould not find NVIM process. Did you start a NVIM '
                   'instance at /tmp/nvim_tplearn?')
-            nv = None
+            nvim = None
 
-        return nv
+        return nvim
 
     def cleanup(self):
+        if self.nvim is None:
+            pytest.skip('Could not find nvim socket instance')
+
         cleanup_func = textwrap.dedent(''':function! BeforeEachTest(file)
             %bwipeout!
             execute "edit " . a:file
@@ -74,6 +80,26 @@ class NvimInstance(object):
 
     def get_last_message(self):
         return self.nvim.command_output('messages').split('\n')[-1]
+
+    def play_record(self, changes=None, feedkeys=None):
+        time_delay = 0.1
+        changes = [] if changes is None else changes
+        self.nvim.command('TypitLearnRecord')
+        time.sleep(time_delay)
+
+        for numline, line in enumerate(changes):
+            self.nvim.current.buffer[numline] = line
+
+        time.sleep(time_delay)
+        self.nvim.command('TypitLearnRecord')
+
+        if feedkeys:
+            for key in feedkeys:
+                time.sleep(time_delay)
+                self.nvim.input(key)
+
+        time.sleep(time_delay)
+        return self.nvim.eval('g:tplearn_abbrev')
 
 class NvimTestBuffer(object):
 

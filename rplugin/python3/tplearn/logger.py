@@ -15,7 +15,7 @@ from functools import wraps
 LOGGER = logging.getLogger('typitlearn')
 
 LOG_FORMAT = '%(asctime)s :: %(levelname)-5s :: %(message)s'
-LOG_FILE = 'typeitlearn.log'
+LOG_FILE = '/tmp/typeitlearn.log'
 
 def setup():
     LOGGER.setLevel(logging.DEBUG)

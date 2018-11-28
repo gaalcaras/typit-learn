@@ -8,6 +8,8 @@ endfunction
 function! s:init()
   call _typitlearn_load_abbreviations()
   call s:init_mappings()
+
+  let g:tplearn_word = get(g:, 'tplearn_word', '\w-')
 endfunction
 
 function s:init_mappings()

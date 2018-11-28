@@ -54,7 +54,9 @@ class TypitLearn(logger.LoggingMixin):
                                               linedata)
             self._record_first = False
 
-        self.tracker.track_replaced_words(buf, firstline, lastline, linedata)
+        word_pattern = self.nvim.eval('g:tplearn_word')
+        self.tracker.track_replaced_words(buf, firstline, lastline, linedata,
+                                          word_pattern)
         self.manager.show_abbrevs(self.tracker.abbrev())
 
     @neovim.rpc_export('nvim_buf_changedtick_event')

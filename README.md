@@ -66,6 +66,7 @@ Variables:
 | ----|----|----|
 | `g:tplearn_log` | `0` | Turn on logging |
 | `g:tplearn_dir` | `$HOME/.config/nvim/typitlearn` | Directory to store abbreviation files |
+| `g:tplearn_word` | `\w-` | Regex that defines the boundaries of a word |
 
 Commands:
 

@@ -7,6 +7,8 @@ Author: Gabriel Alcaras
 License: GNU GPL v3
 """
 
+import re
+
 from tplearn import logger
 
 class TypitLearnTracker(logger.LoggingMixin):
@@ -41,7 +43,8 @@ class TypitLearnTracker(logger.LoggingMixin):
 
         return self._buffers
 
-    def track_replaced_words(self, buf, firstline, lastline, linedata):
+    def track_replaced_words(self, buf, firstline, lastline, linedata,
+                             word_pattern=r'\w-'):
         """Keep track of replaced words based on last buffer changes.
 
         :buf: [Neovim Buffer] buffer where changes occured
@@ -56,8 +59,9 @@ class TypitLearnTracker(logger.LoggingMixin):
         new_line = linedata[0]
         old_line = self._buffers[buf.number][firstline]
 
-        old_words = old_line.split(' ')
-        new_words = new_line.split(' ')
+        word_re = re.compile('[^' + word_pattern + ']')
+        old_words = [w for p in old_line.split(' ') for w in word_re.split(p)]
+        new_words = [w for p in new_line.split(' ') for w in word_re.split(p)]
 
         for i, word in enumerate(old_words):
             if i > len(new_words)-1:

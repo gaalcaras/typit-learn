@@ -37,6 +37,8 @@ class TypitLearnManager(logger.LoggingMixin):
                 xdg_config = self.nvim.eval('$XDG_CONFIG_HOME') or os.path.join(home, '.config')
                 tpdir = os.path.join(xdg_config, 'nvim', 'typitlearn')
 
+        tpdir = os.path.expanduser(tpdir)
+
         if not os.path.exists(tpdir):
             try:
                 self.info('Create %s', tpdir)
@@ -52,7 +54,7 @@ class TypitLearnManager(logger.LoggingMixin):
         files = os.listdir(tpdir)
 
         if not files:
-            self.debug('No files to load')
+            self.error('No files to load')
             return None
 
         to_load = []

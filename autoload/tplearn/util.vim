@@ -27,6 +27,6 @@ function! tplearn#util#abbreviate(typo, fix)
     let l:command = l:command . a:fix
   endif
 
-  execute l:command
+  silent! execute l:command
   let g:tplearn_abbrev[a:typo] = a:fix
 endfunction

@@ -87,6 +87,15 @@ def test_tracker_add_word_next_punctuation():
     TRACKER.track_replaced_words(*changes)
     assert TRACKER.abbrev() == {'jmps': 'jumps', 'dgo': 'dog'}
 
+def test_tracker_add_word_with_dash():
+    buf = NvimTestBuffer(['The quick brown fox jmps. Over the lazy-dgo!'])
+    changes = [buf, 0, 1, buf[:]]
+    TRACKER.track_buffer_updates(*changes)
+
+    changes = [buf, 0, 1, ['The quick brown fox jumps. Over the lazy-dog!']]
+    TRACKER.track_replaced_words(*changes)
+    assert TRACKER.abbrev() == {'jmps': 'jumps', 'dgo': 'dog'}
+
 def test_tracker_delete_lines():
     TRACKER.reset()
     buf = NvimTestBuffer(['The quick brown fox jmps over the lazy dgo stuff',

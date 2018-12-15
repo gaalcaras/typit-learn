@@ -44,7 +44,7 @@ class TypitLearnTracker(logger.LoggingMixin):
         return self._buffers
 
     def track_replaced_words(self, buf, firstline, lastline, linedata,
-                             word_pattern=r'\w-'):
+                             word_pattern=r'\w'):
         """Keep track of replaced words based on last buffer changes.
 
         :buf: [Neovim Buffer] buffer where changes occured

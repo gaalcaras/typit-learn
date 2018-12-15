@@ -129,6 +129,7 @@ class TypitLearnManager(logger.LoggingMixin):
     def save_abbreviations(self, abbreviations=None):
         """Write abbreviations to files"""
 
+        self.load_abbreviations()
         new_abbrev = self._check_abbreviations(abbreviations)
         self._tplearn_abbrev.update(new_abbrev)
 
@@ -166,6 +167,7 @@ class TypitLearnManager(logger.LoggingMixin):
 
         self._tplearn_abbrev.update(abbrev_tpl)
 
+        self._tplearn_abbrev.update(abbrev_tpl)
         self._all_abbrev.update(abbrev_other)
         self._all_abbrev.update(abbrev_tpl)
         self.debug('TypitLearn abbrev: %s', self._tplearn_abbrev)

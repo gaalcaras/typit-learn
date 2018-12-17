@@ -134,15 +134,47 @@ class TypitLearnManager(logger.LoggingMixin):
 
         return message
 
+    def _check_spelling(self, typo=None, fix=None):
+        """Check if typo is valid word.
+
+        :typo: (str)
+        :fix: (str)
+        :returns: None if no redundancy, string with error message otherwise
+        """
+
+        if not typo or not self.nvim.eval('g:tplearn_spellcheck'):
+            return None
+
+        spchk = self.nvim.funcs.spellbadword(typo)
+
+        if spchk[1] == 'bad':
+            return None
+
+        if spchk[1] == 'rare':
+            diagnostic = 'valid (but rare)'
+        elif spchk[1] == 'caps':
+            diagnostic = 'valid (if capitalized)'
+        elif spchk[1] == 'local':
+            diagnostic = 'valid (although only locally)'
+        else:
+            diagnostic = 'valid'
+
+        message = '\\"{}\\" is a {} word in your dictionary. Still expand it to \\"{}\\"?'
+        return message.format(typo, diagnostic, fix)
+
     def _check_abbreviations(self, abb=None):
         abb = self._rm_existing_fixes(abb)
         filtered = copy.deepcopy(abb)
         messages = {}
         for typo, fix in abb.items():
             redundancy = self._check_redundancies(typo, fix)
+            spellcheck = self._check_spelling(typo, fix)
 
             if redundancy:
                 messages.update({redundancy: typo})
+
+            if spellcheck:
+                messages.update({spellcheck: typo})
 
         self.info(messages)
 

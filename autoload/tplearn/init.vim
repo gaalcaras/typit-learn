@@ -10,6 +10,7 @@ function! s:init()
   call s:init_mappings()
 
   let g:tplearn_word = get(g:, 'tplearn_word', '\w-')
+  let g:tplearn_spellcheck = get(g:, 'tplearn_spellcheck', 0)
 endfunction
 
 function s:init_mappings()

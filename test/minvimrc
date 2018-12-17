@@ -6,3 +6,4 @@ let g:tplearn_dir = './test/tmp_abbrev'
 
 iabbrev helloworld helloworld2
 
+set spell spelllang=en

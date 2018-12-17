@@ -37,6 +37,14 @@ def test_changing_word():
     assert abb['quick'] == 'WORD'
     assert NV1.get_last_message() == '[TypitLearn] Recorded "quick" => "WORD"'
 
+def test_fix_valid_word():
+    NV1.cleanup()
+    NV1.nvim.command('let g:tplearn_spellcheck = 1')
+
+    abb = NV1.play_record(['The WORD brown fox jmps over the lazy dgo'])
+    assert abb['quick'] == 'WORD'
+    assert NV1.get_last_message() == '[TypitLearn] No fixes'
+
 def test_replace_existing_typo_same_fix():
     NV1.cleanup()
 
@@ -96,3 +104,12 @@ def test_abort_replace_existing_fix():
                           feedkeys=['A'])
     assert 'brown' not in abb
     assert 'lazy' not in abb
+
+def test_fix_valid_word_prompt():
+    NV2.cleanup()
+    NV2.nvim.command('let g:tplearn_spellcheck = 1')
+
+    abb = NV2.play_record(['The quick HELLO fox jmps over the WORLD dgo'],
+                          feedkeys=['N', 'Y'])
+    assert 'brown' not in abb
+    assert abb['lazy'] == 'WORLD'

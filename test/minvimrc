@@ -1,3 +1,4 @@
+set rtp-=~/.config/nvim/after
 set rtp+=.
 
 let g:tplearn_log = 1

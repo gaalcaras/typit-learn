@@ -8,6 +8,7 @@ License: GNU GPL v3
 """
 
 import os
+import copy
 import platform
 
 from tplearn import logger
@@ -94,37 +95,71 @@ class TypitLearnManager(logger.LoggingMixin):
         prompt = self.nvim.eval('g:tplearn_prompt')
         return options[prompt-1]
 
-    def _check_abbreviations(self, abb=None):
+    def _rm_existing_fixes(self, abb=None):
+        """Removes existing {typo: fix} items from abbreviation dict"""
+
         old_typos = self._all_abbrev.keys()
-        result = {}
+        filtered = {}
+
         for typo, fix in abb.items():
-            if typo in old_typos:
-                if fix == self._all_abbrev[typo]:
-                    continue
+            if not (typo in old_typos and fix == self._all_abbrev[typo]):
+                filtered.update({typo: fix})
 
-                existing = self._all_abbrev[typo]
-                message = '\\"{}\\" already expands to \\"{}\\". Expand to \\"{}\\" instead?'
-                message = message.format(typo, existing, fix)
-            elif fix in old_typos:
-                existing = self._all_abbrev[fix]
-                message = '\\"{}\\" expands to \\"{}\\". Use as a fix of \\"{}\\" instead?'
-                message = message.format(fix, existing, typo)
-            else:
-                result.update({typo: fix})
-                continue
+        return filtered
 
+    def _check_redundancies(self, typo=None, fix=None):
+        """Check abbreviation for redundancies (already used typo, fix already
+        exists as a typo).
+
+        :typo: (str)
+        :fix: (str)
+        :returns: None if no redundancy, string with error message otherwise
+        """
+
+        if not typo or not fix:
+            return None
+
+        old_typos = self._all_abbrev.keys()
+
+        if typo in old_typos:
+            existing = self._all_abbrev[typo]
+            message = '\\"{}\\" already expands to \\"{}\\". Expand to \\"{}\\" instead?'
+            message = message.format(typo, existing, fix)
+        elif fix in old_typos:
+            existing = self._all_abbrev[fix]
+            message = '\\"{}\\" expands to \\"{}\\". Use as a fix of \\"{}\\" instead?'
+            message = message.format(fix, existing, typo)
+        else:
+            return None
+
+        return message
+
+    def _check_abbreviations(self, abb=None):
+        abb = self._rm_existing_fixes(abb)
+        filtered = copy.deepcopy(abb)
+        messages = {}
+        for typo, fix in abb.items():
+            redundancy = self._check_redundancies(typo, fix)
+
+            if redundancy:
+                messages.update({redundancy: typo})
+
+        self.info(messages)
+
+        for message, typo in messages.items():
             self.info(message.replace('\\', ''))
             prompt = self._prompt(message, ['Yes', 'No', 'Abort'], 'No')
             self.info('User answered "{}"'.format(prompt))
 
             if prompt == 'Abort':
+                filtered = {}
                 break
-            elif prompt == 'Yes':
-                result.update({typo: fix})
+            elif prompt == 'No':
+                filtered.pop(typo)
             else:
                 continue
 
-        return result
+        return filtered
 
     def save_abbreviations(self, abbreviations=None):
         """Write abbreviations to files"""

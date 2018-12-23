@@ -17,13 +17,10 @@ class TypitLearnManager(logger.LoggingMixin):
 
     """Manage files, buffers, etc."""
 
-    def __init__(self, nvim, log=False):
+    def __init__(self, nvim):
         self.nvim = nvim
-        self.is_log_enabled = log
         self._all_abbrev = {}
         self._tplearn_abbrev = {}
-
-        self.debug('Initialize TypitLearnManager')
 
     def _get_tpdir(self):
         tpdir = self.nvim.eval('g:tplearn_dir')
@@ -68,7 +65,6 @@ class TypitLearnManager(logger.LoggingMixin):
 
     def load_abbreviations(self):
         """Source TypitLearn abbreviation files"""
-
         files = self._get_files_to_load()
 
         if files:
@@ -176,7 +172,7 @@ class TypitLearnManager(logger.LoggingMixin):
             if spellcheck:
                 messages.update({spellcheck: typo})
 
-        self.info(messages)
+        self.debug(messages)
 
         for message, typo in messages.items():
             self.info(message.replace('\\', ''))

@@ -21,21 +21,33 @@ class TypitLearn(logger.LoggingMixin):
 
     def __init__(self, nvim):
         self.nvim = nvim
-        self.is_log_enabled = False
 
-        if self.nvim.vars['tplearn_log']:
-            logger.setup()
-            self.is_log_enabled = True
-
-        self.info('#### TypitLearn Starts ####')
-        self.manager = TypitLearnManager(self.nvim, self.is_log_enabled)
-        self.tracker = TypitLearnTracker(self.is_log_enabled)
+        self.manager = TypitLearnManager(self.nvim)
+        self.tracker = TypitLearnTracker()
 
         self._record_first = True
 
-    @pynvim.function('_typitlearn_load_abbreviations')
-    def _load_abbreviations(self, *args):
-        self.manager.load_abbreviations()
+    @pynvim.function('_typitlearn_init')
+    def _init(self, *args):
+        def init_functions():
+            self._init_log()
+            yield
+            self.manager.load_abbreviations()
+            yield
+
+        for _ in init_functions():
+            pass
+
+    def _init_log(self, *args):
+        try:
+            log_file = self.nvim.eval('g:tplearn_log')
+            log_level = self.nvim.eval('g:tplearn_log_level')
+            nvim_id = self.nvim.channel_id
+        except pynvim.NvimError:
+            return
+
+        if log_file and log_level:
+            self._setup_log(log_file, log_level, nvim_id)
 
     @pynvim.rpc_export('nvim_buf_lines_event')
     def _on_buf_lines_event(self, *args):
@@ -54,9 +66,7 @@ class TypitLearn(logger.LoggingMixin):
                                               linedata)
             self._record_first = False
 
-        word_pattern = self.nvim.eval('g:tplearn_word')
-        self.tracker.track_replaced_words(buf, firstline, lastline, linedata,
-                                          word_pattern)
+        self.tracker.track_replaced_words(buf, firstline, lastline, linedata)
         self.manager.show_abbrevs(self.tracker.abbrev())
 
     @pynvim.rpc_export('nvim_buf_changedtick_event')

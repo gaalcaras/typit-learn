@@ -6,11 +6,13 @@ function! tplearn#init#initTypitLearn() abort
 endfunction
 
 function! s:init()
-  call _typitlearn_load_abbreviations()
-  call s:init_mappings()
-
-  let g:tplearn_word = get(g:, 'tplearn_word', '\w-')
   let g:tplearn_spellcheck = get(g:, 'tplearn_spellcheck', 0)
+  let g:tplearn_log = get(g:, 'tplearn_log', '')
+  let g:tplearn_log_level = get(g:, 'tplearn_log_level', 'info')
+
+  call _typitlearn_init()
+
+  call s:init_mappings()
 endfunction
 
 function s:init_mappings()

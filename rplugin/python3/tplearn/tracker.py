@@ -16,12 +16,9 @@ class TypitLearnTracker(logger.LoggingMixin):
     """Track editing changes to create abbreviations from typos and their
     fixes"""
 
-    def __init__(self, log=False):
-        self.is_log_enabled = log
+    def __init__(self):
         self._abbrev = {}
         self._buffers = {}
-
-        self.debug('Initialize TypitLearnTracker')
 
     def track_buffer_updates(self, buf, firstline, lastline, linedata):
         """Update 'buffers' based on last buffer changes.
@@ -31,8 +28,8 @@ class TypitLearnTracker(logger.LoggingMixin):
         :lastline: [int] last line of changes
         :linedata: [list] changed lines"""
 
-        self.info('Update buffer %s (add lines %s to %s)',
-                  buf.number, firstline, lastline)
+        self.debug('Update buffer %s (add lines %s to %s)',
+                   buf.number, firstline, lastline)
         changed_lines = dict(zip(range(firstline, lastline+1), linedata))
 
         if buf.number not in self._buffers:
@@ -43,8 +40,7 @@ class TypitLearnTracker(logger.LoggingMixin):
 
         return self._buffers
 
-    def track_replaced_words(self, buf, firstline, lastline, linedata,
-                             word_pattern=r'\w'):
+    def track_replaced_words(self, buf, firstline, lastline, linedata):
         """Keep track of replaced words based on last buffer changes.
 
         :buf: [Neovim Buffer] buffer where changes occured
@@ -59,7 +55,7 @@ class TypitLearnTracker(logger.LoggingMixin):
         new_line = linedata[0]
         old_line = self._buffers[buf.number][firstline]
 
-        word_re = re.compile('[^' + word_pattern + ']')
+        word_re = re.compile(r'[^\w]')
         old_words = [w for p in old_line.split(' ') for w in word_re.split(p)]
         new_words = [w for p in new_line.split(' ') for w in word_re.split(p)]
 
@@ -70,7 +66,7 @@ class TypitLearnTracker(logger.LoggingMixin):
             if (word != new_words[i]) or (word in self._abbrev):
                 self._abbrev.update({word: new_words[i]})
 
-        self.info('abbrev: {}'.format(self._abbrev))
+        self.debug('abbrev: {}'.format(self._abbrev))
 
         return
 

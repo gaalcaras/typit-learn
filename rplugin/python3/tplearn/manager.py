@@ -139,6 +139,7 @@ class TypitLearnManager(logger.LoggingMixin):
         """
 
         if not typo or not self.nvim.eval('g:tplearn_spellcheck'):
+            self.debug('yolo')
             return None
 
         spchk = self.nvim.funcs.spellbadword(typo)
@@ -155,12 +156,11 @@ class TypitLearnManager(logger.LoggingMixin):
         else:
             diagnostic = 'valid'
 
-        message = '\\"{}\\" is a {} word in your dictionary. Still expand it to \\"{}\\"?'
-        return message.format(typo, diagnostic, fix)
+        msg = f'{typo!r} is a {diagnostic} word in your dictionary. '
+        msg += f'Still expand it to {fix!r}?'
+        return msg
 
     def _check_abbreviations(self, abb=None):
-        abb = self._rm_existing_fixes(abb)
-        filtered = copy.deepcopy(abb)
         messages = {}
         for typo, fix in abb.items():
             redundancy = self._check_redundancies(typo, fix)
@@ -172,12 +172,17 @@ class TypitLearnManager(logger.LoggingMixin):
             if spellcheck:
                 messages.update({spellcheck: typo})
 
-        self.debug(messages)
+        self.debug(f'Checking abbreviations: {messages!r}')
+        return messages
+
+    def _process_abbreviations(self, abb=None):
+        abb = self._rm_existing_fixes(abb)
+        filtered = copy.deepcopy(abb)
+        messages = self._check_abbreviations(abb)
 
         for message, typo in messages.items():
-            self.info(message.replace('\\', ''))
             prompt = self._prompt(message, ['Yes', 'No', 'Abort'], 'No')
-            self.info('User answered "{}"'.format(prompt))
+            self.info(f'User answered {prompt!r}')
 
             if prompt == 'Abort':
                 filtered = {}
@@ -193,7 +198,7 @@ class TypitLearnManager(logger.LoggingMixin):
         """Write abbreviations to files"""
 
         self.load_abbreviations()
-        new_abbrev = self._check_abbreviations(abbreviations)
+        new_abbrev = self._process_abbreviations(abbreviations)
         self._tplearn_abbrev.update(new_abbrev)
 
         filepath = self._get_file_to_edit()

@@ -38,78 +38,51 @@ def test_changing_word():
     assert NV1.get_last_message() == '[TypitLearn] Recorded "quick" => "WORD"'
 
 def test_fix_valid_word():
-    NV1.cleanup()
+    assert MANAGER._check_abbreviations({'quick': 'WORD'}) == {}
+
     NV1.nvim.command('let g:tplearn_spellcheck = 1')
 
-    abb = NV1.play_record(['The WORD brown fox jmps over the lazy dgo'])
-    assert abb['quick'] == 'WORD'
-    assert NV1.get_last_message() == '[TypitLearn] No fixes'
+    assert 'quick' in MANAGER._check_abbreviations({'quick': 'WORD'}).values()
+    assert MANAGER._check_abbreviations({'quickk': 'WORD'}) == {}
 
 def test_replace_existing_typo_same_fix():
-    NV1.cleanup()
-
-    abb = NV1.play_record(['The quick brown fox jumps over the lazy dgo'])
-    assert abb['jmps'] == 'jumps'
-    assert NV1.get_last_message() == '[TypitLearn] No fixes'
+    assert MANAGER._rm_existing_fixes({'jmps': 'jumps'}) == {}
+    assert MANAGER._rm_existing_fixes({'jmps': 'a'}) == {'jmps': 'a'}
+    assert MANAGER._rm_existing_fixes({'xoxo': 'jump'}) == {'xoxo': 'jump'}
 
 def test_replace_existing_typo():
-    NV2.cleanup()
+    assert 'jmps' in MANAGER._check_abbreviations({'jmps': 'a'}).values()
 
-    abb = NV2.play_record(['The quick brown fox WORD over the lazy dgo'],
-                          feedkeys=['Y'])
-    assert abb['jmps'] == 'WORD'
-    assert NV2.get_last_message() == '[TypitLearn] Recorded "jmps" => "WORD"'
+def test_replace_existing_fix():
+    assert 'jumps' in MANAGER._check_abbreviations({'jumps': 'a'}).values()
+    assert MANAGER._check_abbreviations({'ahah': 'a'}) == {}
 
-def test_dont_replace_existing_typo():
+def test_prompt_answer_no():
     NV2.cleanup()
     NV2.nvim.current.buffer[1] = 'helloworld'
 
     abb = NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
                            'helloworld3'], feedkeys=['N', 'N'])
-    assert abb['jmps'] == 'WORD'
+    assert abb['jmps'] == 'jumps'
     assert 'helloworld' not in abb
     assert NV2.get_last_message() == '[TypitLearn] No fixes'
 
-def test_abort_replace_existing_typo():
     NV2.cleanup()
     NV2.nvim.current.buffer[1] = 'helloworld'
 
     abb = NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
-                           'helloworld3'],
+                           'helloworld3'], feedkeys=['N', 'Y'])
+    assert abb['jmps'] == 'jumps'
+    assert abb['helloworld'] == 'helloworld3'
+    assert NV2.get_last_message() == '[TypitLearn] Recorded "helloworld" => "helloworld3"'
+
+def test_prompt_answer_abort():
+    NV2.cleanup()
+    NV2.nvim.current.buffer[1] = 'helloworld'
+
+    abb = NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
+                           'helloworld4'],
                           feedkeys=['A'])
-    assert abb['jmps'] == 'WORD'
-    assert 'helloworld' not in abb
+    assert abb['jmps'] == 'jumps'
+    assert abb['helloworld'] == 'helloworld3'
     assert NV2.get_last_message() == '[TypitLearn] No fixes'
-
-def test_replace_existing_fix():
-    NV2.cleanup()
-
-    abb = NV2.play_record(['The quick brown teh jmps over the lazy dgo'],
-                          feedkeys=['Y'])
-    assert abb['fox'] == 'teh'
-    assert NV2.get_last_message() == '[TypitLearn] Recorded "fox" => "teh"'
-
-def test_dont_replace_existing_fix():
-    NV2.cleanup()
-
-    abb = NV2.play_record(['The quick teh fox jmps over the lazy dgo'],
-                          feedkeys=['N'])
-    assert 'brown' not in abb
-    assert NV2.get_last_message() == '[TypitLearn] No fixes'
-
-def test_abort_replace_existing_fix():
-    NV2.cleanup()
-
-    abb = NV2.play_record(['The quick teh fox HELLO over the jmps dgo'],
-                          feedkeys=['A'])
-    assert 'brown' not in abb
-    assert 'lazy' not in abb
-
-def test_fix_valid_word_prompt():
-    NV2.cleanup()
-    NV2.nvim.command('let g:tplearn_spellcheck = 1')
-
-    abb = NV2.play_record(['The quick HELLO fox jmps over the WORLD dgo'],
-                          feedkeys=['N', 'Y'])
-    assert 'brown' not in abb
-    assert abb['lazy'] == 'WORLD'

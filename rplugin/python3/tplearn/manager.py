@@ -66,13 +66,23 @@ class TypitLearnManager(logger.LoggingMixin):
     def load_abbreviations(self):
         """Source TypitLearn abbreviation files"""
         files = self._get_files_to_load()
+        self._all_abbrev = {}
+        self._tplearn_abbrev = {}
 
         if files:
             for abbrev_file in files:
-                self.info('Loading %s', abbrev_file)
-                self.nvim.command('silent source {}'.format(abbrev_file))
+                self.info(f'Loading {abbrev_file!r}')
+                self.nvim.command(f'silent source {abbrev_file}')
 
-        self._load_all_abbrev()
+        abbrev_other = self._parse_nvim_abbrev('iabbrev')
+        abbrev_tpl = self.nvim.eval('g:tplearn_abbrev')
+
+        self._tplearn_abbrev.update(abbrev_tpl)
+        self._all_abbrev.update(abbrev_other)
+        self._all_abbrev.update(abbrev_tpl)
+
+        self.debug(f'TPLearn abbrev: {self._tplearn_abbrev}')
+        self.debug(f'Other abbrev: {abbrev_other!r}')
 
     def _get_file_to_edit(self):
         tpdir = self._get_tpdir()
@@ -228,18 +238,6 @@ class TypitLearnManager(logger.LoggingMixin):
         fixes = [output[i] for i in range(2, len(output), 3)]
 
         return dict(zip(typos, fixes))
-
-    def _load_all_abbrev(self):
-        abbrev_other = self._parse_nvim_abbrev('iabbrev')
-        abbrev_tpl = self.nvim.eval('g:tplearn_abbrev')
-
-        self._tplearn_abbrev.update(abbrev_tpl)
-
-        self._tplearn_abbrev.update(abbrev_tpl)
-        self._all_abbrev.update(abbrev_other)
-        self._all_abbrev.update(abbrev_tpl)
-        self.debug('TypitLearn abbrev: %s', self._tplearn_abbrev)
-        self.debug('All abbrev: %s', self._all_abbrev)
 
     def edit_file(self):
         """Open abbreviation file"""

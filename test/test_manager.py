@@ -9,6 +9,7 @@ License: GNU GPL v3
 
 from test.utils import NvimInstance
 from tplearn import manager #pylint: disable=import-error
+import time
 
 NV1 = NvimInstance()
 NV2 = NvimInstance('socket')
@@ -56,6 +57,34 @@ def test_replace_existing_typo():
 def test_replace_existing_fix():
     assert 'jumps' in MANAGER._check_abbreviations({'jumps': 'a'}).values()
     assert MANAGER._check_abbreviations({'ahah': 'a'}) == {}
+
+def test_recording_two_instances():
+    NVa = NvimInstance()
+    NVb = NvimInstance()
+    NVa.cleanup()
+    NVb.cleanup()
+
+    # Initialize everything, abbreviations are the same in both instances
+    assert NVa.abb == NVb.abb
+
+    # Record new typo in 1, abbreviations are now different
+    NVa.play_record(['The quick brown fox jmps over the lazy yoloo'])
+    assert NVa.abb != NVb.abb
+
+    # Reload abbreviations in 2, abbrevs are the same again
+    time.sleep(0.2)
+    NVb.nvim.command('TypitLearnReload')
+    assert NVa.abb == NVb.abb
+
+    # Record new typo in 2, then in 1. Abbreviations in 1 should contain all
+    # abbreviations from 2 + the new one.
+    abb2 = NVb.play_record(['The quick brown fox jmps over the lzy dog'])
+    assert NVb.abb['lazy'] == 'lzy'
+    time.sleep(0.2)
+    NVa.play_record(['The quick brown fox jmps ovar the lazy dog'])
+    assert NVa.abb['lazy'] == 'lzy'
+    assert NVa.abb['over'] == 'ovar'
+    assert 'over' not in NVb.abb
 
 def test_prompt_answer_no():
     NV2.cleanup()

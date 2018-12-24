@@ -7,8 +7,6 @@ Author: Gabriel Alcaras
 License: GNU GPL v3
 """
 
-from shutil import copyfile, rmtree
-import os
 import tempfile
 import textwrap
 import time
@@ -16,14 +14,6 @@ import time
 import pytest
 
 from neovim import attach
-
-def mktmp_abbrev():
-    if os.path.exists(os.path.join('test', 'tmp_abbrev')):
-        rmtree(os.path.join('test', 'tmp_abbrev'))
-
-    os.makedirs(os.path.join('test', 'tmp_abbrev'))
-    copyfile(os.path.join('test', 'abbrev', 'all.vim'),
-             os.path.join('test', 'tmp_abbrev', 'all.vim'))
 
 def mktemp_with_lines(lines):
     tmp_path = tempfile.mkstemp()[1]
@@ -39,7 +29,6 @@ def gen_tmp_files():
     test_f.close()
 
     tmp = mktemp_with_lines(test)
-    mktmp_abbrev()
 
     return tmp
 
@@ -99,6 +88,10 @@ class NvimInstance(object):
                 self.nvim.input(key)
 
         time.sleep(time_delay)
+        return self.nvim.eval('g:tplearn_abbrev')
+
+    @property
+    def abb(self):
         return self.nvim.eval('g:tplearn_abbrev')
 
 class NvimTestBuffer(object):

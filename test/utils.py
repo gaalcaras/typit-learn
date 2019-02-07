@@ -92,6 +92,7 @@ class NvimInstance(object):
 
     @property
     def abb(self):
+        time.sleep(0.01)
         return self.nvim.eval('g:tplearn_abbrev')
 
 class NvimTestBuffer(object):

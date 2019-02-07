@@ -9,7 +9,6 @@ License: GNU GPL v3
 
 from test.utils import NvimInstance
 from tplearn import manager #pylint: disable=import-error
-import time
 
 NV1 = NvimInstance()
 NV2 = NvimInstance('socket')
@@ -85,6 +84,21 @@ def test_recording_two_instances():
     assert NVa.abb['lazy'] == 'lzy'
     assert NVa.abb['over'] == 'ovar'
     assert 'over' not in NVb.abb
+
+    # Edit the abbrev file by removing the last abbrev, then record a new
+    # abbreviation in 2: the deleted abbreviation should have been deleted
+    # there as well.
+    lines = []
+    with open('./test/tmp_abbrev/all.vim', 'r') as tmp:
+        lines = tmp.readlines()
+
+    lines = lines[:-1]
+
+    with open('./test/tmp_abbrev/all.vim', 'w') as tmp:
+        tmp.writelines(lines)
+
+    NVb.nvim.command('TypitLearnReload')
+    assert 'yoloo' not in NVb.abb
 
 def test_prompt_answer_no():
     NV2.cleanup()

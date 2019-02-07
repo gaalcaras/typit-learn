@@ -83,6 +83,7 @@ class TypitLearnManager(logger.LoggingMixin):
 
         self.debug(f'TPLearn abbrev: {self._tplearn_abbrev}')
         self.debug(f'Other abbrev: {abbrev_other!r}')
+        self.nvim.command('call tplearn#util#notify("reload")')
 
     def _get_file_to_edit(self):
         tpdir = self._get_tpdir()
@@ -96,6 +97,7 @@ class TypitLearnManager(logger.LoggingMixin):
 
         command = 'let g:tplearn_prompt = confirm("{}", "{}", {})'
         command = command.format(msg, option, default)
+        self.nvim.command('call tplearn#util#notify("ask")')
         self.nvim.command(command)
 
         prompt = self.nvim.eval('g:tplearn_prompt')

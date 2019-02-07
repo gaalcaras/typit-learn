@@ -30,3 +30,8 @@ function! tplearn#util#abbreviate(typo, fix)
   silent! execute l:command
   let g:tplearn_abbrev[a:typo] = a:fix
 endfunction
+
+" The 'tp_record' event is only used for the test suite
+function! tplearn#util#notify(value)
+  call rpcnotify(0, 'tp_record', a:value)
+endfunction

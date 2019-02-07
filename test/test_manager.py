@@ -6,23 +6,23 @@ File: test_manager.py.py
 Author: Gabriel Alcaras
 License: GNU GPL v3
 """
-
 from test.utils import NvimInstance
 from tplearn import manager #pylint: disable=import-error
 
-NV1 = NvimInstance()
+NVa = NvimInstance()
+NVb = NvimInstance()
 NV2 = NvimInstance('socket')
-MANAGER = manager.TypitLearnManager(NV1.nvim)
+MANAGER = manager.TypitLearnManager(NVa.nvim)
 
 def test_file_to_edit():
     assert MANAGER._get_file_to_edit() == './test/tmp_abbrev/all.vim'
 
 def test_fix_typos():
-    NV1.cleanup()
+    NVa.cleanup()
     MANAGER.fix_typos({'jmps': 'jumps'})
-    assert NV1.nvim.buffers[1][4] == 'jumps (should become jumps)'
-    assert NV1.nvim.buffers[1][5] == 'jmpstest (should stay the same)'
-    assert NV1.nvim.buffers[1][6] == 'test jumps, test (should become jumps)'
+    assert NVa.nvim.buffers[1][4] == 'jumps (should become jumps)'
+    assert NVa.nvim.buffers[1][5] == 'jmpstest (should stay the same)'
+    assert NVa.nvim.buffers[1][6] == 'test jumps, test (should become jumps)'
 
 def test_load_abbreviations():
     MANAGER.load_abbreviations()
@@ -31,16 +31,16 @@ def test_load_abbreviations():
     assert MANAGER._tplearn_abbrev == {'teh': 'the', 'jmps': 'jumps'}
 
 def test_changing_word():
-    NV1.cleanup()
+    NVa.cleanup()
 
-    abb = NV1.play_record(['The WORD brown fox jmps over the lazy dgo'])
-    assert abb['quick'] == 'WORD'
-    assert NV1.get_last_message() == '[TypitLearn] Recorded "quick" => "WORD"'
+    NVa.play_record(['The WORD brown fox jmps over the lazy dgo'])
+    assert NVa.abb['quick'] == 'WORD'
+    assert NVa.get_last_message() == '[TypitLearn] Recorded "quick" => "WORD"'
 
 def test_fix_valid_word():
     assert MANAGER._check_abbreviations({'quick': 'WORD'}) == {}
 
-    NV1.nvim.command('let g:tplearn_spellcheck = 1')
+    NVa.nvim.command('let g:tplearn_spellcheck = 1')
 
     assert 'quick' in MANAGER._check_abbreviations({'quick': 'WORD'}).values()
     assert MANAGER._check_abbreviations({'quickk': 'WORD'}) == {}
@@ -58,8 +58,6 @@ def test_replace_existing_fix():
     assert MANAGER._check_abbreviations({'ahah': 'a'}) == {}
 
 def test_recording_two_instances():
-    NVa = NvimInstance()
-    NVb = NvimInstance()
     NVa.cleanup()
     NVb.cleanup()
 
@@ -71,15 +69,17 @@ def test_recording_two_instances():
     assert NVa.abb != NVb.abb
 
     # Reload abbreviations in 2, abbrevs are the same again
-    time.sleep(0.2)
+    NVb.nvim.subscribe('tp_record')
     NVb.nvim.command('TypitLearnReload')
-    assert NVa.abb == NVb.abb
+    event = NVb.wait_for_event('tp_record', 'reload')
+    assert NVb.abb == NVa.abb
+    NVb.nvim.unsubscribe('tp_record')
 
     # Record new typo in 2, then in 1. Abbreviations in 1 should contain all
     # abbreviations from 2 + the new one.
-    abb2 = NVb.play_record(['The quick brown fox jmps over the lzy dog'])
+    NVb.play_record(['The quick brown fox jmps over the lzy yoloo'])
     assert NVb.abb['lazy'] == 'lzy'
-    time.sleep(0.2)
+
     NVa.play_record(['The quick brown fox jmps ovar the lazy dog'])
     assert NVa.abb['lazy'] == 'lzy'
     assert NVa.abb['over'] == 'ovar'
@@ -104,28 +104,28 @@ def test_prompt_answer_no():
     NV2.cleanup()
     NV2.nvim.current.buffer[1] = 'helloworld'
 
-    abb = NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
+    NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
                            'helloworld3'], feedkeys=['N', 'N'])
-    assert abb['jmps'] == 'jumps'
-    assert 'helloworld' not in abb
+    assert NV2.abb['jmps'] == 'jumps'
+    assert 'helloworld' not in NV2.abb
     assert NV2.get_last_message() == '[TypitLearn] No fixes'
 
     NV2.cleanup()
     NV2.nvim.current.buffer[1] = 'helloworld'
 
-    abb = NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
+    NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
                            'helloworld3'], feedkeys=['N', 'Y'])
-    assert abb['jmps'] == 'jumps'
-    assert abb['helloworld'] == 'helloworld3'
+    assert NV2.abb['jmps'] == 'jumps'
+    assert NV2.abb['helloworld'] == 'helloworld3'
     assert NV2.get_last_message() == '[TypitLearn] Recorded "helloworld" => "helloworld3"'
 
 def test_prompt_answer_abort():
     NV2.cleanup()
     NV2.nvim.current.buffer[1] = 'helloworld'
 
-    abb = NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
+    NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
                            'helloworld4'],
                           feedkeys=['A'])
-    assert abb['jmps'] == 'jumps'
-    assert abb['helloworld'] == 'helloworld3'
+    assert NV2.abb['jmps'] == 'jumps'
+    assert NV2.abb['helloworld'] == 'helloworld3'
     assert NV2.get_last_message() == '[TypitLearn] No fixes'

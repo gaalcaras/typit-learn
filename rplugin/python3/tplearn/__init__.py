@@ -81,9 +81,11 @@ class TypitLearn(logger.LoggingMixin):
     def _toggle_record(self):
         if self.nvim.eval('g:tplearn_record') == 0:
             self._record_start()
+            self.nvim.command('call tplearn#util#notify("start")')
             self.nvim.vars['tplearn_record'] = 1
         else:
             self._record_stop()
+            self.nvim.command('call tplearn#util#notify("stop")')
             self.nvim.vars['tplearn_record'] = 0
 
     @pynvim.command('TypitLearnEdit', nargs=0)

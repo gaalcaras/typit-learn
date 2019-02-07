@@ -9,7 +9,6 @@ License: GNU GPL v3
 
 import tempfile
 import textwrap
-import time
 
 import pytest
 
@@ -40,6 +39,8 @@ class NvimInstance(object):
         if self.nvim is None:
             return
 
+        self.abb = Abbreviation(self.nvim)
+
     def _attach(self, attach_type):
         if attach_type == 'child':
             nvim = attach('child', argv=["/bin/env", "nvim", "-u",
@@ -63,6 +64,9 @@ class NvimInstance(object):
         cleanup_func = textwrap.dedent(''':function! BeforeEachTest(file)
             %bwipeout!
             execute "edit " . a:file
+            let g:tplearn_abbrev = {}
+            let g:tplearn_spellcheck = 0
+            source test/minvimrc
         endfunction
         ''')
 
@@ -72,30 +76,65 @@ class NvimInstance(object):
     def get_last_message(self):
         return self.nvim.command_output('messages').split('\n')[-1]
 
+    def wait_for_event(self, event, value=None):
+        no_match = True
+        while no_match:
+            cur_event = self.nvim.next_message()
+
+            if not cur_event:
+                continue
+
+            if cur_event[1] == event:
+                if value and not cur_event[2][0] == value:
+                    continue
+
+                no_match = False
+                return cur_event
+
     def play_record(self, changes=None, feedkeys=None):
-        time_delay = 0.1
         changes = [] if changes is None else changes
-        self.nvim.command('TypitLearnRecord')
-        time.sleep(time_delay)
+        def sequence(feedkeys):
+            self.nvim.command('TypitLearnRecord')
+            yield self.wait_for_event('tp_record', 'start')
 
-        for numline, line in enumerate(changes):
-            self.nvim.current.buffer[numline] = line
+            for numline, line in enumerate(changes):
+                self.nvim.current.buffer[numline] = line
 
-        time.sleep(time_delay)
-        self.nvim.command('TypitLearnRecord')
+            self.nvim.command('TypitLearnRecord')
 
-        if feedkeys:
-            for key in feedkeys:
-                time.sleep(time_delay)
-                self.nvim.input(key)
+            if feedkeys:
+                for key in feedkeys:
+                    yield self.wait_for_event('tp_record', 'ask')
+                    self.nvim.input(key)
 
-        time.sleep(time_delay)
-        return self.nvim.eval('g:tplearn_abbrev')
+            yield self.wait_for_event('tp_record', 'stop')
 
-    @property
-    def abb(self):
-        time.sleep(0.01)
-        return self.nvim.eval('g:tplearn_abbrev')
+        self.nvim.subscribe('tp_record')
+        for _ in sequence(feedkeys):
+            pass
+
+        self.nvim.unsubscribe('tp_record')
+
+class Abbreviation:
+    def __init__(self, nvim):
+        self.abb = nvim.eval('g:tplearn_abbrev')
+        self.nvim = nvim
+
+    def __getitem__(self, item):
+        self.abb = self.nvim.eval('g:tplearn_abbrev')
+        return self.abb[item]
+
+    def __contains__(self, item):
+        return item in self.abb
+
+    def __repr__(self):
+        return '<Abbreviation ' + repr(self.abb) + '>'
+
+    def __eq__(self, other):
+        self.abb = self.nvim.eval('g:tplearn_abbrev')
+        other.abb = other.nvim.eval('g:tplearn_abbrev')
+
+        return self.abb == other.abb
 
 class NvimTestBuffer(object):
 

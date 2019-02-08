@@ -42,10 +42,14 @@ typit-learn instead.
   want, type <kbd>\<leader>q</kbd> again. Done! All your typos (and their
   respective fixes) have been recorded.
 + **Undo abbreviation expansion**: you can use the regular vim undo commands to
-  undo a fix if you want to.
+  undo a fix if you want to. Can be disabled with `g:tplearn_undo`.
 + **Maintain a list of typos**: typit-learn will let you know if you
   risk erasing an existing abbreviation, or using a fix that's already known as
   a typo.
++ **Spellchecking**: typit-learn can check whether the typos you're trying to
+  fix are actually valid words in your dictionary. Especially useful if a word
+  is a typo in one language but is correct in another that you're less familiar
+  with. Off by default, you can turn it on with `let g:tplearn_spellcheck = 1`.
 + **Fix all typos at once**: after you record a new typo, typit-learn will
   automatically fix any other occurrence of that typo in the current buffer.
 
@@ -64,9 +68,11 @@ Variables:
 
 | Variable | Default | Description |
 | ----|----|----|
-| `g:tplearn_log` | `0` | Turn on logging |
+| `g:tplearn_log` | ` ` | Path to log file. Logging disabled if empty. |
+| `g:tplearn_log_level` | `info` | Logging level |
 | `g:tplearn_dir` | `$HOME/.config/nvim/typitlearn` | Directory to store abbreviation files |
-| `g:tplearn_word` | `\w-` | Regex that defines the boundaries of a word |
+| `g:tplearn_undo` | `1` | Enable undoing typo completion. |
+| `g:tplearn_spellcheck` | 0 | Turn on spellchecking on fixes |
 
 Commands:
 
@@ -83,4 +89,11 @@ instance of nvim to pass (they'll be skipped otherwise), you can start it with:
 
 ```bash
 ./test/manual_test.sh
+```
+
+You can also install the pre commit hook by running the following command at
+the root of the directory:
+
+```bash
+ln -s ../../test/pre_commit.sh .git/hooks/pre-commit
 ```

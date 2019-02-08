@@ -42,8 +42,10 @@ class NvimInstance(object):
 
     def _attach(self, attach_type):
         if attach_type == 'child':
-            return attach('child', argv=["/bin/env", "nvim", "-u",
+            nvim = attach('child', argv=["/bin/env", "nvim", "-u",
                                          "test/minvimrc", "--embed"])
+            nvim.ui_attach(100, 100)
+            return nvim
 
         try:
             nvim = attach('socket', path='/tmp/nvim_tplearn')

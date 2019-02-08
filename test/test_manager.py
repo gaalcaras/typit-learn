@@ -35,7 +35,7 @@ def test_changing_word():
 
     NVa.play_record(['The WORD brown fox jmps over the lazy dgo'])
     assert NVa.abb['quick'] == 'WORD'
-    assert NVa.get_last_message() == '[TypitLearn] Recorded "quick" => "WORD"'
+    assert NVa.get_last_message() == '[TypitLearn] Recorded: "quick" => "WORD"'
 
 def test_fix_valid_word():
     assert MANAGER._check_abbreviations({'quick': 'WORD'}) == {}
@@ -108,7 +108,7 @@ def test_prompt_answer_no():
                            'helloworld3'], feedkeys=['N', 'N'])
     assert NV2.abb['jmps'] == 'jumps'
     assert 'helloworld' not in NV2.abb
-    assert NV2.get_last_message() == '[TypitLearn] No fixes'
+    assert NV2.get_last_message() == '[TypitLearn] Recorded: no fixes'
 
     NV2.cleanup()
     NV2.nvim.current.buffer[1] = 'helloworld'
@@ -117,7 +117,7 @@ def test_prompt_answer_no():
                            'helloworld3'], feedkeys=['N', 'Y'])
     assert NV2.abb['jmps'] == 'jumps'
     assert NV2.abb['helloworld'] == 'helloworld3'
-    assert NV2.get_last_message() == '[TypitLearn] Recorded "helloworld" => "helloworld3"'
+    assert NV2.get_last_message() == '[TypitLearn] Recorded: "helloworld" => "helloworld3"'
 
 def test_prompt_answer_abort():
     NV2.cleanup()
@@ -128,4 +128,4 @@ def test_prompt_answer_abort():
                           feedkeys=['A'])
     assert NV2.abb['jmps'] == 'jumps'
     assert NV2.abb['helloworld'] == 'helloworld3'
-    assert NV2.get_last_message() == '[TypitLearn] No fixes'
+    assert NV2.get_last_message() == '[TypitLearn] Recorded: no fixes'

@@ -215,9 +215,16 @@ class TypitLearnManager(logger.LoggingMixin):
 
         filepath = self._get_file_to_edit()
         function = 'call tplearn#util#abbreviate("{}", "{}")\n'
-        content = ''
+        content = letter = ''
 
-        for typo, fix in self._tplearn_abbrev.items():
+        for typo in sorted(self._tplearn_abbrev.keys(),
+                           key=lambda k: k.lower()):
+            if letter < typo[0].lower():
+                content += '\n' if letter else ''
+                letter = typo[0].lower()
+                content += f'" {letter}\n'
+
+            fix = self._tplearn_abbrev[typo]
             content += function.format(typo, fix)
 
         content = content.encode('utf-8', 'surrogateescape')

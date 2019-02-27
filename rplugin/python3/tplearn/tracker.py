@@ -9,6 +9,7 @@ License: GNU GPL v3
 
 import re
 
+from collections import OrderedDict
 from tplearn import logger
 
 class TypitLearnTracker(logger.LoggingMixin):
@@ -17,7 +18,7 @@ class TypitLearnTracker(logger.LoggingMixin):
     fixes"""
 
     def __init__(self):
-        self._abbrev = {}
+        self._abbrev = OrderedDict()
         self._buffers = {}
 
     def track_buffer_updates(self, buf, firstline, lastline, linedata):
@@ -64,7 +65,11 @@ class TypitLearnTracker(logger.LoggingMixin):
                 break
 
             if (word != new_words[i]) or (word in self._abbrev):
+                new = word not in self._abbrev or new_words[i] != self._abbrev[word]
                 self._abbrev.update({word: new_words[i]})
+
+                if new:
+                    self._abbrev.move_to_end(word, last=False)
 
         self.debug('abbrev: {}'.format(self._abbrev))
 
@@ -83,5 +88,5 @@ class TypitLearnTracker(logger.LoggingMixin):
 
     def reset(self):
         """Reset stored abbreviations"""
-        self._abbrev = {}
+        self._abbrev = OrderedDict()
         self._buffers = {}

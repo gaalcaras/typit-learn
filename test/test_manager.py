@@ -114,7 +114,7 @@ def test_prompt_answer_no():
     NV2.nvim.current.buffer[1] = 'helloworld'
 
     NV2.play_record(['The quick brown fox HELLO over the lazy dgo',
-                           'helloworld3'], feedkeys=['N', 'Y'])
+                           'helloworld3'], feedkeys=['Y', 'N'])
     assert NV2.abb['jmps'] == 'jumps'
     assert NV2.abb['helloworld'] == 'helloworld3'
     assert NV2.get_last_message() == '[TypitLearn] Recorded: "helloworld" => "helloworld3"'

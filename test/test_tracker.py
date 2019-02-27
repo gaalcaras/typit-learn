@@ -7,6 +7,7 @@ Author: Gabriel Alcaras
 License: GNU GPL v3
 """
 
+from collections import OrderedDict
 from tplearn import tracker #pylint: disable=import-error
 from test.utils import NvimTestBuffer
 
@@ -135,3 +136,26 @@ def test_tracker_yank_lines():
     TRACKER.track_replaced_words(*changes)
 
     assert TRACKER.abbrev() == {}
+
+def test_order_abbrev():
+    TRACKER.reset()
+
+    buf = NvimTestBuffer(['The quick brown fox jmps over the lazy dgo'])
+    changes = [buf, 0, 1, buf[:]]
+    TRACKER.track_buffer_updates(*changes)
+
+    changes = [buf, 0, 1, ['The quick brown fox jmps over the lazy dag']]
+    TRACKER.track_replaced_words(*changes)
+    assert TRACKER.abbrev() == OrderedDict({'dgo': 'dag'})
+
+    changes = [buf, 0, 1, ['The quick brown fox jumps over the lazy dag']]
+    TRACKER.track_replaced_words(*changes)
+    assert TRACKER.abbrev() == OrderedDict({'jmps': 'jumps',
+                                            'dgo': 'dag'})
+
+    changes = [buf, 0, 1, ['The quick brown fox jumps over the lazy dog']]
+    TRACKER.track_replaced_words(*changes)
+    assert TRACKER.abbrev() == OrderedDict({'dgo': 'dog',
+                                            'jmps': 'jumps'})
+
+    TRACKER.reset()

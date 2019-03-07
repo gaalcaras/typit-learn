@@ -115,6 +115,12 @@ class NvimInstance(object):
 
         self.nvim.unsubscribe('tp_record')
 
+    def undo(self):
+        self.nvim.subscribe('tp_record')
+        self.nvim.command('TypitLearnUndo')
+        self.wait_for_event('tp_record', 'undo')
+        self.nvim.unsubscribe('tp_record')
+
 class Abbreviation:
     def __init__(self, nvim):
         self.abb = nvim.eval('g:tplearn_abbrev')
@@ -125,6 +131,7 @@ class Abbreviation:
         return self.abb[item]
 
     def __contains__(self, item):
+        self.abb = self.nvim.eval('g:tplearn_abbrev')
         return item in self.abb
 
     def __repr__(self):

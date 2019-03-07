@@ -19,8 +19,8 @@ class TypitLearnManager(logger.LoggingMixin):
 
     def __init__(self, nvim):
         self.nvim = nvim
-        self._all_abbrev = {}
-        self._tplearn_abbrev = {}
+        self._all_abbrev = self._tplearn_abbrev = {}
+        self._last_abbrev = []
 
     def _get_tpdir(self):
         tpdir = self.nvim.eval('g:tplearn_dir')
@@ -68,6 +68,7 @@ class TypitLearnManager(logger.LoggingMixin):
         files = self._get_files_to_load()
         self._all_abbrev = {}
         self._tplearn_abbrev = {}
+        self.nvim.vars['tplearn_abbrev'] = {}
 
         if files:
             for abbrev_file in files:
@@ -206,12 +207,11 @@ class TypitLearnManager(logger.LoggingMixin):
 
         return filtered
 
-    def save_abbreviations(self, abbreviations=None):
-        """Write abbreviations to files"""
+    def _write_abbreviations(self, abbreviations=None):
+        """Write abbreviations to file"""
 
-        self.load_abbreviations()
-        new_abbrev = self._process_abbreviations(abbreviations)
-        self._tplearn_abbrev.update(new_abbrev)
+        if not abbreviations:
+            return
 
         filepath = self._get_file_to_edit()
         function = 'call tplearn#util#abbreviate("{}", "{}")\n'
@@ -235,7 +235,36 @@ class TypitLearnManager(logger.LoggingMixin):
                       len(abbreviations), filepath)
             tpfile.write(content)
 
+    def save_abbreviations(self, abbreviations=None):
+        """Save abbreviations"""
+
+        self.load_abbreviations()
+        new_abbrev = self._process_abbreviations(abbreviations)
+        self._tplearn_abbrev.update(new_abbrev)
+        self._last_abbrev.append(new_abbrev)
+        self._write_abbreviations(new_abbrev)
+
         return new_abbrev
+
+    def rm_last_abbrevs(self):
+        """Remove abbreviations from variables and file"""
+
+        try:
+            last = self._last_abbrev.pop()
+        except IndexError:
+            self.nvim.call('tplearn#util#message', 'Nothing to undo.')
+            self.nvim.command('call tplearn#util#notify("undo")')
+            return
+
+        for typo in last.keys():
+            self._tplearn_abbrev.pop(typo)
+            self._all_abbrev.pop(typo)
+            self.nvim.command(f'unabbreviate {typo}')
+
+        self._write_abbreviations(last)
+        self.load_abbreviations()
+        self.show_abbrevs(last, 'Deleted:')
+        self.nvim.command('call tplearn#util#notify("undo")')
 
     def _parse_nvim_abbrev(self, command):
         output = self.nvim.command_output(command)

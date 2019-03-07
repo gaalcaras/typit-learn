@@ -83,6 +83,7 @@ def test_recording_two_instances():
     NVa.play_record(['The quick brown fox jmps ovar the lazy dog'])
     assert NVa.abb['lazy'] == 'lzy'
     assert NVa.abb['over'] == 'ovar'
+    assert NVa.abb['yoloo'] == 'dog'
     assert 'over' not in NVb.abb
 
     # Edit the abbrev file by removing the last abbrev, then record a new
@@ -129,3 +130,23 @@ def test_prompt_answer_abort():
     assert NV2.abb['jmps'] == 'jumps'
     assert NV2.abb['helloworld'] == 'helloworld3'
     assert NV2.get_last_message() == '[TypitLearn] Recorded: no fixes'
+
+def test_undo_last_abbrev():
+    NVa.cleanup()
+
+    NVa.undo()
+    assert NVa.get_last_message()[0:21] == '[TypitLearn] Deleted:'
+    assert 'yoloo' not in NVa.abb
+    assert 'over' not in NVa.abb
+
+    # Test unabbreviate
+    assert NVa.nvim.command_output(':iabbrev yoloo').strip() == 'No abbreviation found'
+    assert NVa.nvim.command_output(':iabbrev over').strip() == 'No abbreviation found'
+
+    NVa.undo()
+    assert 'dgo' not in NVa.abb
+    NVa.undo()
+    assert 'quick' not in NVa.abb
+
+    NVa.undo()
+    assert NVa.get_last_message() == '[TypitLearn] Nothing to undo.'

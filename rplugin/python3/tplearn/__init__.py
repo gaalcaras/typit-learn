@@ -92,6 +92,10 @@ class TypitLearn(logger.LoggingMixin):
     def _edit_abbrev_file(self):
         self.manager.edit_file()
 
+    @pynvim.command('TypitLearnUndo', nargs=0)
+    def _undo_last(self):
+        self.manager.rm_last_abbrevs()
+
     @pynvim.command('TypitLearnReload', nargs=0)
     def _reload(self):
         self.manager.load_abbreviations()
